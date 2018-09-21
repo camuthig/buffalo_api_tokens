@@ -1,35 +1,40 @@
-# Welcome to Buffalo!
+# Buffalo API Tokens
 
-Thank you for choosing Buffalo for your web development needs.
+This project is to better acquaint myself with Go, [Buffalo](http://gobuffalo.io) and new features such as modules. 
+It also serves as a place to put together a sample of a simple way to implement API tokens in a fairly secure manner.
 
-## Database Setup
+## Token Design
 
-It looks like you chose to set up your application using a postgres database! Fantastic!
+The design of the API tokens in this project are meant to be highly convenient for end users, but allow for a
+reasonable amount of security.
 
-The first thing you need to do is open up the "database.yml" file and edit it to use the correct usernames, passwords, hosts, etc... that are appropriate for your environment.
+Upon signing in, a user will be dispatched an access token and a refresh token. The access token is a standard JWT,
+containing an expiration time and the ID of the user as the subject claim. The expiration time on the token is 1 hour
+but can be tweaked based on the needs of a project. The refresh token is a cryptographical secure string, concatenated
+with a representation of the user's ID to ensure uniqueness across users.
 
-You will also need to make sure that **you** start/install the database of your choice. Buffalo **won't** install and start postgres for you.
+Upon expiration of an access token, a user can send their refresh token to the server to receive both a new access
+token and refresh token. Upon use of the refresh token, it is removed from the system and is no longer valid.
 
-### Create Your Databases
+When logging out, a user should be capable of sending their refresh token to the server for deletion. A user should
+also be capable of logging out of all devices at once, essentially removing all active refresh tokens.
 
-Ok, so you've edited the "database.yml" file and started postgres, now Buffalo can create the databases in that file for you:
+## Setup
 
-	$ buffalo db create -a
+A Docker Compose file is provided that will boot up a Postgres database for testing. To start this, just run
 
-## Starting the Application
+```
+docker-compose up -d
+```
 
-Buffalo ships with a command that will watch your application and automatically rebuild the Go binary and any assets for you. To do that run the "buffalo dev" command:
+On first starting the server, the migrations will need to be run with
 
-	$ buffalo dev
+```
+buffalo db migrate
+```
 
-If you point your browser to [http://127.0.0.1:3000](http://127.0.0.1:3000) you should see a "Welcome to Buffalo!" page.
+From there, the Buffalo server can be run in development with
 
-**Congratulations!** You now have your Buffalo application up and running.
-
-## What Next?
-
-We recommend you heading over to [http://gobuffalo.io](http://gobuffalo.io) and reviewing all of the great documentation there.
-
-Good luck!
-
-[Powered by Buffalo](http://gobuffalo.io)
+```
+buffalo dev
+```
