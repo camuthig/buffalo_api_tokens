@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/gobuffalo/pop"
 	"github.com/gobuffalo/uuid"
 	"github.com/gobuffalo/validate"
@@ -16,6 +18,8 @@ type User struct {
 	Nickname     string    `json:"nickname" db:"nickname"`
 	Password     string    `json:"-" db:"-"`
 	PasswordHash []byte    `json:"-" db:"password_hash"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 func (u *User) Validate(tx *pop.Connection) (*validate.Errors, error) {

@@ -35,6 +35,19 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: refresh_tokens; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE refresh_tokens (
+    id character(80) NOT NULL,
+    user_id uuid,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE refresh_tokens OWNER TO postgres;
+
+--
 -- Name: schema_migration; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -55,11 +68,20 @@ CREATE TABLE users (
     name character varying NOT NULL,
     nickname character varying NOT NULL,
     password_hash bytea,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone
 );
 
 
 ALTER TABLE users OWNER TO postgres;
+
+--
+-- Name: refresh_tokens refresh_tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY refresh_tokens
+    ADD CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id);
+
 
 --
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
@@ -82,6 +104,14 @@ ALTER TABLE ONLY users
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
+
+
+--
+-- Name: refresh_tokens refresh_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY refresh_tokens
+    ADD CONSTRAINT refresh_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
 
 
 --

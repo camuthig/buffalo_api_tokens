@@ -4,5 +4,6 @@ CREATE TABLE users (
     name VARCHAR NOT NULL,
     nickname VARCHAR NOT NULL,
     password_hash BYTEA,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
 );
