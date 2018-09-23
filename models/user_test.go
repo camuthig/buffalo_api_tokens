@@ -37,5 +37,8 @@ func (ms *ModelSuite) Test_Validate() {
 	ms.Assert().Nil(err)
 	ms.Assert().NotNil(verr)
 	ms.Assert().Len(verr.Errors, 4)
-	ms.AssertContainsErrorKeys(*verr, []string{"password", "nickname", "name", "email"})
+	ms.Assert().Contains(verr.Errors, "email")
+	ms.Assert().Contains(verr.Errors, "name")
+	ms.Assert().Contains(verr.Errors, "nickname")
+	ms.Assert().Contains(verr.Errors, "password")
 }
