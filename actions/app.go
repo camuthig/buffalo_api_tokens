@@ -59,8 +59,8 @@ func App() *buffalo.App {
 		app.Use(popmw.Transaction(models.DB))
 
 		app.GET("/", HomeHandler)
-		app.POST("/auth/register", RegisterHandler)
-
+		app.POST("/auth/register", Register)
+		app.POST("/auth/login", Login)
 	}
 
 	return app

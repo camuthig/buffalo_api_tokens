@@ -10,17 +10,17 @@ import (
 func (ms *ModelSuite) Test_BeforeSave() {
 	u := &models.User{
 		ID:       uuid.Must(uuid.NewV4()),
-		Name:     "Bob Barker",
-		Nickname: "Bobby Boy",
-		Email:    "bob.barker@thepriceisright.com",
-		Password: "thepriceiswrong",
+		Name:     "Napolean Bonaparte",
+		Nickname: "Napolean",
+		Email:    "napolean.bonaparte@ziggypig.com",
+		Password: "ziggypiggy",
 	}
 
 	err := u.BeforeSave(ms.DB)
 
 	ms.Assert().Nil(err)
 
-	ms.Assert().Nil(bcrypt.CompareHashAndPassword(u.PasswordHash, []byte("thepriceiswrong")))
+	ms.Assert().Nil(bcrypt.CompareHashAndPassword(u.PasswordHash, []byte("ziggypiggy")))
 }
 
 func (ms *ModelSuite) Test_Validate() {

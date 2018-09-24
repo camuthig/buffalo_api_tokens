@@ -1,0 +1,23 @@
+[[scenario]]
+name = "users"
+
+  [[scenario.table]]
+    name = "users"
+
+    [[scenario.table.row]]
+      id = "<%= uuid() %>"
+      email = "bill@beexcellent.com"
+      password_hash = "<%= hash("beexcellent") %>"
+      name = "William S. Preston Esq."
+      nickname = "Bill"
+      created_at = "<%= now() %>"
+      updated_at = "<%= now() %>"
+
+    [[scenario.table.row]]
+      id = "<%= uuid() %>"
+      email = "ted@beexcellent.com"
+      password_hash = "<%= hash("beexcellent") %>"
+      name = "Theodore Logan"
+      nickname = "Ted"
+      created_at = "<%= now() %>"
+      updated_at = "<%= now() %>"

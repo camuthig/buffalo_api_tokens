@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"golang.org/x/crypto/bcrypt"
 	"errors"
 	"time"
 
@@ -17,10 +18,11 @@ type registerRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
+	RememberMe bool `json:"remember_me"`
 }
 
-// RegisterHandler supports creating new users.
-func RegisterHandler(c buffalo.Context) error {
+// Register a new user into the system and retrieve initial API tokens.
+func Register(c buffalo.Context) error {
 	req := &registerRequest{}
 
 	if err := c.Bind(req); err != nil {
@@ -53,10 +55,10 @@ func RegisterHandler(c buffalo.Context) error {
 
 	c.Set("user", u)
 
-	rt, at, err := createTokens(c)
+	rt, at, err := createTokens(c, req.RememberMe)
 
 	c.Render(201 ,r.JSON(map[string]interface{}{
-		"refresh_token": rt.ID,
+		"refresh_token": rt,
 		"access_token": at,
 		"user": u,
 	}))
@@ -64,27 +66,85 @@ func RegisterHandler(c buffalo.Context) error {
 	return nil
 }
 
-func createTokens(c buffalo.Context) (*models.RefreshToken, string, error) {
-	u, ok := c.Value("user").(*models.User)
+type loginRequest struct {
+	Email string
+	Password string
+	RememberMe bool
+}
 
-	if !ok {
-		c.Render(204, nil)
+// Login using user credentials and return user information along with API tokens
+func Login (c buffalo.Context) error {
+	req := &loginRequest{}
+
+	if err := c.Bind(req); err != nil {
+		return err
 	}
 
 	tx, ok := c.Value("tx").(*pop.Connection)
 
 	if !ok {
-		return nil, "", errors.New("No transaction found")
+		return errors.New("Internal Server Error")
 	}
 
-	rt := &models.RefreshToken{
-		User:   *u,
-		UserID: u.ID,
+	u := &models.User{}
+
+	if err := tx.Where("email = ?", req.Email).First(u); err != nil {
+		return err;
 	}
 
-	if err := tx.Create(rt); err != nil {
-		return nil, "", err
+	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(req.Password)); err != nil {
+		c.Render(404, r.JSON(map[string]interface{}{
+			"error": map[string]interface{}{
+				"message": "The email and password did not match any users in our system.",
+			},
+		}))
+
+		return nil
 	}
+
+	c.Set("user", u)
+
+	rt, at, err := createTokens(c, req.RememberMe)
+
+	if err != nil {
+		return err
+	}
+
+	c.Render(200 ,r.JSON(map[string]interface{}{
+		"refresh_token": rt,
+		"access_token": at,
+		"user": u,
+	}))
+
+	return nil
+}
+
+func createTokens(c buffalo.Context, rm bool) (*string, *string, error) {
+	var rt *models.RefreshToken
+
+	u, ok := c.Value("user").(*models.User)
+
+	if !ok {
+		return nil, nil, errors.New("Internal Server Error")
+	}
+
+	if rm {
+		tx, ok := c.Value("tx").(*pop.Connection)
+
+		if !ok {
+			return nil, nil, errors.New("No transaction found")
+		}
+
+		rt = &models.RefreshToken{
+			User:   *u,
+			UserID: u.ID,
+		}
+
+		if err := tx.Create(rt); err != nil {
+			return nil, nil, err
+		}
+	}
+
 
 	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Subject:   u.ID.String(),
@@ -94,8 +154,12 @@ func createTokens(c buffalo.Context) (*models.RefreshToken, string, error) {
 	a, err := jwt.SignedString([]byte(envy.Get("APP_AUTH_KEY", "")))
 
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
-	return rt, a, nil
+	if rt != nil {
+		return &rt.ID, &a, nil
+	}
+
+	return nil, &a, nil
 }
