@@ -7,6 +7,7 @@ import (
 	paramlogger "github.com/gobuffalo/mw-paramlogger"
 	"github.com/unrolled/secure"
 
+	"buffalo_api_tokens/middleware"
 	"buffalo_api_tokens/models"
 
 	"github.com/gobuffalo/buffalo-pop/pop/popmw"
@@ -61,6 +62,8 @@ func App() *buffalo.App {
 		app.GET("/", HomeHandler)
 		app.POST("/auth/register", Register)
 		app.POST("/auth/login", Login)
+
+		app.GET("/me", middleware.Authenticate(Me))
 	}
 
 	return app
