@@ -5,7 +5,7 @@ name = "users"
     name = "users"
 
     [[scenario.table.row]]
-      id = "<%= uuid() %>"
+      id = "<%= uuidNamed("bill") %>"
       email = "bill@beexcellent.com"
       password_hash = "<%= hash("beexcellent") %>"
       name = "William S. Preston Esq."
@@ -21,3 +21,10 @@ name = "users"
       nickname = "Ted"
       created_at = "<%= now() %>"
       updated_at = "<%= now() %>"
+
+  [[scenario.table]]
+    name = "refresh_tokens"
+
+    [[scenario.table.row]]
+      id = "supersecretrefreshtoken"
+      user_id = "<%= uuidNamed("bill") %>"
