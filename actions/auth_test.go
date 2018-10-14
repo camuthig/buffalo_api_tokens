@@ -3,6 +3,10 @@ package actions
 import (
 	"buffalo_api_tokens/models"
 	"encoding/json"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gobuffalo/envy"
 )
 
 func (as *ActionSuite) Test_Register() {
@@ -145,6 +149,25 @@ func (as *ActionSuite) Test_RefreshWithBadToken() {
 func (as *ActionSuite) Test_Logout() {
 	as.LoadFixture("users")
 
+	u := &models.User{}
+
+	if err := as.DB.Where("email = ?", "bill@beexcellent.com").First(u); err != nil {
+		as.Fail(err.Error())
+	}
+
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Subject:   u.ID.String(),
+		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	a, err := jwt.SignedString([]byte(envy.Get("APP_AUTH_KEY", "")))
+
+	if err != nil {
+		as.Fail(err.Error())
+	}
+
+	as.Willie.Headers["Authorization"] = a
+
 	res := as.JSON("/auth/logout").Post(map[string]interface{}{
 		"refresh_token": "supersecretrefreshtoken",
 	})
@@ -154,7 +177,7 @@ func (as *ActionSuite) Test_Logout() {
 	// Ensure the column has been deleted
 	r := &models.RefreshToken{}
 
-	err := as.DB.Where("id = ?", "supersecretrefreshtoken").First(r)
+	err = as.DB.Where("id = ?", "supersecretrefreshtoken").First(r)
 
 	as.NotNil(err)
 }
@@ -162,9 +185,106 @@ func (as *ActionSuite) Test_Logout() {
 func (as *ActionSuite) Test_LogoutWithoutFindingToken() {
 	as.LoadFixture("users")
 
+	u := &models.User{}
+
+	if err := as.DB.Where("email = ?", "bill@beexcellent.com").First(u); err != nil {
+		as.Fail(err.Error())
+	}
+
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Subject:   u.ID.String(),
+		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	a, err := jwt.SignedString([]byte(envy.Get("APP_AUTH_KEY", "")))
+
+	if err != nil {
+		as.Fail(err.Error())
+	}
+
+	as.Willie.Headers["Authorization"] = a
+
 	res := as.JSON("/auth/logout").Post(map[string]interface{}{
 		"refresh_token": "anonexistingtoken",
 	})
 
 	as.Equal(204, res.Code)
+}
+
+func (as *ActionSuite) Test_LogoutAllDevices() {
+	as.LoadFixture("users")
+
+	u := &models.User{}
+
+	if err := as.DB.Where("email = ?", "bill@beexcellent.com").First(u); err != nil {
+		as.Fail(err.Error())
+	}
+
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Subject:   u.ID.String(),
+		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	a, err := jwt.SignedString([]byte(envy.Get("APP_AUTH_KEY", "")))
+
+	if err != nil {
+		as.Fail(err.Error())
+	}
+
+	as.Willie.Headers["Authorization"] = a
+
+	res := as.JSON("/auth/logout").Post(map[string]interface{}{})
+
+	as.Equal(204, res.Code)
+
+	// Ensure the column has been deleted
+	r := []models.RefreshToken{}
+
+	err = as.DB.Where("user_id = ?", u.ID).All(r)
+
+	as.NotNil(err)
+}
+
+func (as *ActionSuite) Test_LogoutWithOtherUsersToken() {
+	as.LoadFixture("users")
+
+	u := &models.User{}
+
+	if err := as.DB.Where("email = ?", "bill@beexcellent.com").First(u); err != nil {
+		as.Fail(err.Error())
+	}
+
+	jwt := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Subject:   u.ID.String(),
+		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	a, err := jwt.SignedString([]byte(envy.Get("APP_AUTH_KEY", "")))
+
+	if err != nil {
+		as.Fail(err.Error())
+	}
+
+	as.Willie.Headers["Authorization"] = a
+
+	res := as.JSON("/auth/logout").Post(map[string]interface{}{
+		"refresh_token": "tedssupersecretrefreshtoken",
+	})
+
+	as.Equal(204, res.Code)
+
+	// Ensure the column has been deleted
+	r := &models.RefreshToken{}
+
+	err = as.DB.Where("id = ?", "supersecretrefreshtoken").First(r)
+
+	as.Nil(err)
+
+	count, _ := as.DB.Count(models.RefreshToken{})
+
+	as.Equal(2, count)
+
+	err = as.DB.Where("id = ?", "tedssupersecretrefreshtoken").First(r)
+
+	as.Nil(err)
 }

@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"database/sql"
 	"golang.org/x/crypto/bcrypt"
 	"errors"
 	"time"
@@ -170,6 +171,14 @@ type logoutRequest struct {
 
 // Logout a user from the system
 func Logout(c buffalo.Context) error {
+	u, ok := c.Value("user").(*models.User)
+
+	if !ok {
+		c.Render(204, nil)
+
+		return nil
+	}
+
 	req := &refreshRequest{}
 
 	if err := c.Bind(req); err != nil {
@@ -182,13 +191,26 @@ func Logout(c buffalo.Context) error {
 		return errors.New("Internal Server Error")
 	}
 
-	rt := &models.RefreshToken{
-		ID: req.RefreshToken,
+	rts := []models.RefreshToken{}
+
+	q := tx.Where("user_id = ?", u.ID)
+
+	if req.RefreshToken != "" {
+		q = q.Where("id = ?", req.RefreshToken)
 	}
 
-	if err := tx.Destroy(rt); err != nil {
+	if err := q.All(&rts); err != nil {
+		if err == sql.ErrNoRows {
+			c.Render(204, nil)
+
+			return nil
+		}
+	}
+
+	if err := tx.Destroy(rts); err != nil {
 		return err
 	}
+
 
 	c.Render(204, nil)
 

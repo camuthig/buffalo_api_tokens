@@ -62,8 +62,8 @@ func App() *buffalo.App {
 		app.GET("/", HomeHandler)
 		app.POST("/auth/register", Register)
 		app.POST("/auth/login", Login)
-		app.POST("/auth/logout", Logout)
 		app.POST("/auth/refresh", Refresh)
+		app.POST("/auth/logout", middleware.Authenticate(Logout))
 
 		app.GET("/me", middleware.Authenticate(Me))
 	}
