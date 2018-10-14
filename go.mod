@@ -3,6 +3,7 @@ module buffalo_api_tokens
 require (
 	dmitri.shuralyov.com/text/kebabcase v0.0.0-20180217051803-40e40b42552a // indirect
 	github.com/cockroachdb/cockroach-go v0.0.0-20180212155653-59c0560478b7 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gobuffalo/buffalo v0.13.0-beta.1
 	github.com/gobuffalo/buffalo-pop v0.0.0-20180916191218-8a6042d8e9a6
 	github.com/gobuffalo/envy v1.6.4
