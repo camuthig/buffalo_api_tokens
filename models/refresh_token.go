@@ -15,7 +15,7 @@ import (
 type RefreshToken struct {
 	ID        string    `json:"id" db:"id"`
 	UserID    uuid.UUID `json:"-" db:"user_id"`
-	User      User      `json:"user" db:"-"`
+	User      User      `json:"user" belongs_to:"user"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
